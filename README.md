@@ -21,9 +21,9 @@ data, no API key required.
 
 ## Prerequisites
 
-- **Node.js 18.18+ (LTS recommended).** It is **not currently installed** on
-  this machine — install it from [nodejs.org](https://nodejs.org) and reopen
-  your terminal before running the commands below.
+- **Node.js 18.18+** (this project was verified on Node 24 LTS). If you're on a
+  fresh machine, install it from [nodejs.org](https://nodejs.org) and reopen
+  your terminal.
 
 ## Getting started
 
