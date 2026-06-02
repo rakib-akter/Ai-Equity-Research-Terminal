@@ -30,6 +30,41 @@ body {
   font-feature-settings: "tnum";
 }
 
+/* Lightweight markdown styling for AI memo / Q&A output (no typography plugin). */
+.prose-memo p {
+  margin: 0 0 0.75rem;
+}
+.prose-memo strong {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+.prose-memo em {
+  color: #64748b;
+}
+.prose-memo h1,
+.prose-memo h2,
+.prose-memo h3 {
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin: 1rem 0 0.5rem;
+}
+.prose-memo ul,
+.prose-memo ol {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.prose-memo ol {
+  list-style: decimal;
+}
+.prose-memo li {
+  margin: 0.25rem 0;
+}
+.prose-memo a {
+  color: #38bdf8;
+}
+
 /* Thin custom scrollbar so dense data panels feel less heavy. */
 ::-webkit-scrollbar {
   width: 10px;

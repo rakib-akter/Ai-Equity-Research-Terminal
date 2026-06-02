@@ -2,9 +2,12 @@ import Link from "next/link";
 import SearchBox from "@/components/SearchBox";
 import MetricCard, { type MetricTone } from "@/components/MetricCard";
 import FreeMemo from "@/components/FreeMemo";
+import AiMemo from "@/components/AiMemo";
+import FilingsQA from "@/components/FilingsQA";
 import { getCompanyData, SecNotFoundError } from "@/lib/sec";
 import { buildAnnualFinancials, type YearFinancials } from "@/lib/financials";
 import { computeRatios } from "@/lib/ratios";
+import { isAiConfigured } from "@/lib/ai";
 import {
   formatCurrency,
   formatDelta,
@@ -43,6 +46,8 @@ export default async function DashboardPage({ params }: PageProps) {
   const financials = buildAnnualFinancials(facts);
   const ratios = computeRatios(financials);
   const latest = financials[0];
+  const aiEnabled = isAiConfigured();
+  const dbEnabled = Boolean(process.env.DATABASE_URL);
 
   return (
     <div className="space-y-8">
@@ -53,6 +58,10 @@ export default async function DashboardPage({ params }: PageProps) {
         ratios={ratios}
         latest={latest}
       />
+
+      {ratios && latest ? (
+        <AiMemo ticker={profile.ticker} aiEnabled={aiEnabled} />
+      ) : null}
 
       {ratios && latest ? (
         <section>
@@ -179,6 +188,12 @@ export default async function DashboardPage({ params }: PageProps) {
           <p className="text-sm text-slate-500">No recent filings found.</p>
         )}
       </section>
+
+      <FilingsQA
+        ticker={profile.ticker}
+        aiEnabled={aiEnabled}
+        dbEnabled={dbEnabled}
+      />
 
       <p className="text-xs text-slate-600">
         Source: U.S. SEC EDGAR. Figures are as reported in XBRL and may differ
