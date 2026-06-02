@@ -99,25 +99,30 @@ AI_API_KEY="<your-gemini-key>"
 
 The **AI memo** works with just this — no database needed.
 
+Defaults (in `.env.example`) target Gemini's free tier:
+`AI_CHAT_MODEL=gemini-2.5-flash`, `AI_EMBEDDING_MODEL=gemini-embedding-001`
+(requested at 768 dims). Note the `gemini-2.0-*` models currently have **zero**
+free-tier quota — use 2.5.
+
 **2. Database (enables source-backed Q&A).** Reuse your existing Supabase
 project; all tables live in an isolated `equity` schema.
 
-- In Supabase: **Database → Extensions → enable `vector`**.
-- Add the two connection strings to `.env.local` (see `.env.example`):
-  `DATABASE_URL` (pooled, 6543) and `DIRECT_URL` (direct, 5432), each with
-  `?schema=equity`.
-- Create the tables and the vector index:
+- Add both connection strings to `.env.local` (see `.env.example`):
+  `DATABASE_URL` (pooled, 6543, `&pgbouncer=true`) and `DIRECT_URL` (direct,
+  5432), each ending in `?schema=equity`.
+- Provision the database (the npm `db:*` scripts use `prisma db execute`, so no
+  `psql` is required). **Prisma's CLI reads `.env`, not `.env.local`** — so copy
+  the two `DATABASE_URL` / `DIRECT_URL` lines into a `.env` file first, then:
 
   ```bash
-  npm run db:push      # creates the equity.Filing / equity.FilingChunk tables
-  npm run db:index     # adds the pgvector HNSW index (needs psql on PATH)
+  npm run db:bootstrap   # creates the equity schema + enables pgvector in it
+  npm run db:push        # creates the equity.Filing / equity.FilingChunk tables
+  npm run db:index       # adds the pgvector HNSW cosine index
   ```
 
-  > No `psql`? Paste the contents of `prisma/sql/pgvector_index.sql` into the
-  > Supabase SQL editor instead.
-
-Then on any dashboard: **Index latest filings** once per company, and ask
-questions — answers cite the SEC documents they came from.
+Then on any dashboard: **Index latest filings** once per company (downloads the
+latest 10-K + 10-Q, embeds them), and ask questions — answers cite the SEC
+documents they came from.
 
 **Switching providers** (OpenAI, Ollama, Groq): change the `AI_*` env vars in
 `.env.example`. If the embedding dimension changes, update `vector(N)` in

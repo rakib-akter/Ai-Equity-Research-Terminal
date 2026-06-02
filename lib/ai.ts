@@ -9,7 +9,7 @@
  *     AI_API_KEY=<your Gemini key>
  *     AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
  *     AI_CHAT_MODEL=gemini-2.0-flash
- *     AI_EMBEDDING_MODEL=text-embedding-004   (768 dims)
+ *     AI_EMBEDDING_MODEL=gemini-embedding-001  (request 768 dims)
  *
  *   OpenAI:
  *     AI_API_KEY=sk-...
@@ -31,8 +31,8 @@ import OpenAI from "openai";
 
 const DEFAULTS = {
   baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-  chatModel: "gemini-2.0-flash",
-  embeddingModel: "text-embedding-004",
+  chatModel: "gemini-2.5-flash",
+  embeddingModel: "gemini-embedding-001",
   embeddingDim: 768,
 };
 
@@ -67,21 +67,63 @@ function getClient(): OpenAI {
   return client;
 }
 
+// Free embedding tiers cap tokens-per-minute, so we send small sub-batches
+// with a short pause between them and back off on rate-limit (429) errors.
+const EMBED_SUBBATCH = 5;
+const EMBED_PAUSE_MS = 1200;
+const MAX_RETRIES = 5;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function isRateLimit(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "status" in err &&
+    (err as { status?: number }).status === 429
+  );
+}
+
+async function embedSubbatch(
+  batch: string[],
+  attempt = 0
+): Promise<number[][]> {
+  try {
+    const res = await getClient().embeddings.create({
+      model: EMBEDDING_MODEL,
+      input: batch,
+      // Pin the output width so it matches the pgvector column. Gemini's
+      // gemini-embedding-001 defaults to 3072 (too wide for an HNSW index).
+      dimensions: EMBEDDING_DIM,
+    });
+    // The API returns items with an `index`; sort to guarantee input order.
+    return res.data
+      .slice()
+      .sort((a, b) => a.index - b.index)
+      .map((d) => d.embedding as number[]);
+  } catch (err) {
+    if (isRateLimit(err) && attempt < MAX_RETRIES) {
+      // Exponential backoff: 5s, 10s, 20s, 40s, 80s.
+      await sleep(5000 * 2 ** attempt);
+      return embedSubbatch(batch, attempt + 1);
+    }
+    throw err;
+  }
+}
+
 /**
- * Embed a batch of texts. Returns one vector per input, in order.
- * Batches are kept modest to stay within free-tier request limits.
+ * Embed an arbitrary number of texts, in order. Internally throttled into
+ * small sub-batches so it stays within free-tier rate limits.
  */
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
-  const res = await getClient().embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: texts,
-  });
-  // The API returns items with an `index`; sort to guarantee input order.
-  return res.data
-    .slice()
-    .sort((a, b) => a.index - b.index)
-    .map((d) => d.embedding as number[]);
+  const out: number[][] = [];
+  for (let i = 0; i < texts.length; i += EMBED_SUBBATCH) {
+    const batch = texts.slice(i, i + EMBED_SUBBATCH);
+    out.push(...(await embedSubbatch(batch)));
+    if (i + EMBED_SUBBATCH < texts.length) await sleep(EMBED_PAUSE_MS);
+  }
+  return out;
 }
 
 /** Embed a single query string. */

@@ -8,6 +8,10 @@
 --   psql "$DIRECT_URL" -f prisma/sql/pgvector_index.sql
 -- (the npm script `db:index` does this for you).
 
+-- pgvector lives in the equity schema, so put it on the search_path to
+-- resolve the `vector_cosine_ops` operator class.
+SET search_path TO equity, public;
+
 CREATE INDEX IF NOT EXISTS filing_chunk_embedding_idx
   ON equity."FilingChunk"
   USING hnsw (embedding vector_cosine_ops);

@@ -10,7 +10,7 @@
 
 const CHUNK_CHARS = 3500; // ~900 tokens
 const CHUNK_OVERLAP = 400;
-const MAX_CHUNKS = 120;
+const MAX_CHUNKS = 60; // cap to stay within free-tier embedding limits
 
 function userAgent(): string {
   return (
