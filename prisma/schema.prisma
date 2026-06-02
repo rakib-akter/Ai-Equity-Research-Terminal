@@ -1,0 +1,56 @@
+// Prisma schema for the AI / retrieval layer.
+//
+// All tables live in a dedicated "equity" Postgres schema so they never
+// collide with the other project already in this Supabase database.
+//
+// The embedding column uses pgvector. Prisma has no native vector type, so we
+// declare it as Unsupported() — it's created/migrated fine, and similarity
+// search is done with raw SQL (the `<=>` cosine-distance operator) in
+// lib/search.ts. The vector index is created separately in
+// prisma/sql/pgvector_index.sql (Prisma can't index an Unsupported column).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled (Supabase port 6543) — app runtime
+  directUrl = env("DIRECT_URL") // direct (port 5432) — migrations
+  schemas   = ["equity"]
+}
+
+model Filing {
+  id              String   @id @default(cuid())
+  cik             String
+  ticker          String
+  accessionNumber String   @unique
+  form            String
+  filingDate      String
+  reportDate      String?
+  title           String
+  primaryDocUrl   String
+  chunkCount      Int      @default(0)
+  embeddedAt      DateTime @default(now())
+
+  chunks FilingChunk[]
+
+  @@index([ticker])
+  @@schema("equity")
+}
+
+model FilingChunk {
+  id         String  @id @default(cuid())
+  filingId   String
+  chunkIndex Int
+  content    String
+
+  // 768-dim vector (Gemini text-embedding-004). Keep in sync with
+  // EMBEDDING_DIM in lib/ai.ts. Nullable so a row can exist pre-embedding.
+  embedding Unsupported("vector(768)")?
+
+  filing Filing @relation(fields: [filingId], references: [id], onDelete: Cascade)
+
+  @@index([filingId])
+  @@schema("equity")
+}

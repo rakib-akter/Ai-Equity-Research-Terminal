@@ -134,6 +134,7 @@ export interface CompanyProfile {
 }
 
 export interface RecentFiling {
+  accessionNumber: string;
   form: string;
   filingDate: string;
   reportDate: string;
@@ -220,6 +221,7 @@ export function extractRecentFilings(
     const accessionNoDashes = accession.replace(/-/g, "");
     const base = `https://www.sec.gov/Archives/edgar/data/${cik}/${accessionNoDashes}`;
     out.push({
+      accessionNumber: accession,
       form: r.form[i],
       filingDate: r.filingDate[i],
       reportDate: r.reportDate[i],
