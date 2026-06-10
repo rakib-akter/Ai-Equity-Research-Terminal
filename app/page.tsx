@@ -1,4 +1,5 @@
 import SearchBox from "@/components/SearchBox";
+import Watchlist from "@/components/Watchlist";
 
 const EXAMPLES = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "JPM"];
 
@@ -63,6 +64,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Watchlist />
 
       <section className="mx-auto mt-16 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((f) => (

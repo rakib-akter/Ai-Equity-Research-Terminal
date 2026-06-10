@@ -39,6 +39,17 @@ model Filing {
   @@schema("equity")
 }
 
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  ticker    String   @unique
+  name      String
+  exchange  String?
+  sector    String?
+  createdAt DateTime @default(now())
+
+  @@schema("equity")
+}
+
 model FilingChunk {
   id         String  @id @default(cuid())
   filingId   String

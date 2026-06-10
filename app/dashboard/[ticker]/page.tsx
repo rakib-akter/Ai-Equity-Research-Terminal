@@ -5,7 +5,9 @@ import FreeMemo from "@/components/FreeMemo";
 import AiMemo from "@/components/AiMemo";
 import FilingsQA from "@/components/FilingsQA";
 import TrendCharts from "@/components/TrendCharts";
+import WatchlistButton from "@/components/WatchlistButton";
 import { getCompanyData, SecNotFoundError } from "@/lib/sec";
+import { isWatched } from "@/lib/watchlist";
 import { buildAnnualFinancials, type YearFinancials } from "@/lib/financials";
 import { computeRatios } from "@/lib/ratios";
 import { isAiConfigured } from "@/lib/ai";
@@ -50,9 +52,22 @@ export default async function DashboardPage({ params }: PageProps) {
   const aiEnabled = isAiConfigured();
   const dbEnabled = Boolean(process.env.DATABASE_URL);
 
+  let initialSaved = false;
+  if (dbEnabled) {
+    try {
+      initialSaved = await isWatched(profile.ticker);
+    } catch {
+      // DB unreachable — leave unsaved; the button will surface any error.
+    }
+  }
+
   return (
     <div className="space-y-8">
-      <ProfileHeader profile={profile} />
+      <ProfileHeader
+        profile={profile}
+        dbEnabled={dbEnabled}
+        initialSaved={initialSaved}
+      />
 
       <FreeMemo
         companyName={profile.name}
@@ -218,8 +233,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function ProfileHeader({
   profile,
+  dbEnabled,
+  initialSaved,
 }: {
   profile: Awaited<ReturnType<typeof getCompanyData>>["profile"];
+  dbEnabled: boolean;
+  initialSaved: boolean;
 }) {
   const facts = [
     profile.exchange && `${profile.exchange}: ${profile.ticker}`,
@@ -257,8 +276,16 @@ function ProfileHeader({
             </a>
           ) : null}
         </div>
-        <div className="text-right text-xs text-slate-500">
-          CIK {profile.cik}
+        <div className="flex flex-col items-end gap-2">
+          <WatchlistButton
+            ticker={profile.ticker}
+            name={profile.name}
+            exchange={profile.exchange}
+            sector={profile.sicDescription}
+            initialSaved={initialSaved}
+            dbEnabled={dbEnabled}
+          />
+          <div className="text-xs text-slate-500">CIK {profile.cik}</div>
         </div>
       </div>
     </section>

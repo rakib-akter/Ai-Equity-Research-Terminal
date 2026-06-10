@@ -10,6 +10,7 @@
     "postinstall": "prisma generate",
     "db:bootstrap": "prisma db execute --file prisma/sql/bootstrap.sql --schema prisma/schema.prisma",
     "db:push": "prisma db push",
+    "db:exec": "node scripts/db-exec.mjs",
     "db:index": "prisma db execute --file prisma/sql/pgvector_index.sql --schema prisma/schema.prisma",
     "db:studio": "prisma studio"
   },
