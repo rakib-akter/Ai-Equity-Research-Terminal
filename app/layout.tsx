@@ -25,9 +25,17 @@ export default function RootLayout({
                 AI Equity Research Terminal
               </span>
             </Link>
-            <span className="hidden text-xs text-slate-500 sm:block">
-              Data: SEC EDGAR
-            </span>
+            <nav className="flex items-center gap-4 text-sm">
+              <Link
+                href="/compare"
+                className="font-medium text-slate-400 transition-colors hover:text-sky-300"
+              >
+                Compare
+              </Link>
+              <span className="hidden text-xs text-slate-500 sm:block">
+                Data: SEC EDGAR
+              </span>
+            </nav>
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
