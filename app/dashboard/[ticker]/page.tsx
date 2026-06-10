@@ -4,6 +4,7 @@ import MetricCard, { type MetricTone } from "@/components/MetricCard";
 import FreeMemo from "@/components/FreeMemo";
 import AiMemo from "@/components/AiMemo";
 import FilingsQA from "@/components/FilingsQA";
+import TrendCharts from "@/components/TrendCharts";
 import { getCompanyData, SecNotFoundError } from "@/lib/sec";
 import { buildAnnualFinancials, type YearFinancials } from "@/lib/financials";
 import { computeRatios } from "@/lib/ratios";
@@ -137,6 +138,8 @@ export default async function DashboardPage({ params }: PageProps) {
           </div>
         </section>
       ) : null}
+
+      <TrendCharts rows={financials} />
 
       {financials.length > 0 ? (
         <section>
